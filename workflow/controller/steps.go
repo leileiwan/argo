@@ -42,7 +42,7 @@ func (woc *wfOperationCtx) executeSteps(nodeName string, tmplCtx *templateresolu
 			_ = woc.killDaemonedChildren(node.ID)
 		}
 	}()
-
+	isfinished:=true
 	// The template scope of this step.
 	stepTemplateScope := tmplCtx.GetTemplateScope()
 
@@ -92,7 +92,8 @@ func (woc *wfOperationCtx) executeSteps(nodeName string, tmplCtx *templateresolu
 
 		if !sgNode.Fulfilled() {
 			woc.log.Infof("Workflow step group node %s not yet completed", sgNode.ID)
-			return node, nil
+			isfinished=false
+			continue
 		}
 
 		if sgNode.FailedOrError() {
@@ -138,6 +139,9 @@ func (woc *wfOperationCtx) executeSteps(nodeName string, tmplCtx *templateresolu
 				woc.buildLocalScope(stepsCtx.scope, prefix, childNode)
 			}
 		}
+	}
+	if !isfinished{
+		return node,nil
 	}
 	woc.updateOutboundNodes(nodeName, tmpl)
 	// If this template has outputs from any of its steps, copy them to this node here
